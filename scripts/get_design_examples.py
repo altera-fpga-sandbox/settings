@@ -21,11 +21,25 @@ Tool to get design examples
 ===============================================================================================
 """)
 
-LIST_JSON = "list.json"
+LIST_JSON = 'list.json'
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+PREDEFINED_URL_FILE = 'predefined_url.json'
+
+def get_predefined_url():
+    try:
+        with open(PREDEFINED_URL_FILE, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        logging.error(f"File not found: {file_path}")
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to decode JSON from file {file_path}: {e}")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred while reading the file {file_path}: {e}")
+    return None
 
 def get_design_examples(options):
-  print("get_design_examples")
+    print(get_predefined_url());
+    print("get_design_examples")
 
 def check_prerequisite(options):
     if options.output:
