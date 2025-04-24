@@ -20,4 +20,4 @@ jobs:
           python-version: 3.x
 
       - name: Get design examples
-        run: ls -la 
+        run: python scripts/get_design_examples.py
