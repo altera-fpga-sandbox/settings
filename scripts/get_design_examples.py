@@ -22,6 +22,7 @@ Tool to get design examples
 """)
 
 LIST_JSON = "list.json"
+LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 def get_design_examples(options):
   print("get_design_examples")
