@@ -22,8 +22,131 @@ Tool to get design examples
 """)
 
 LIST_JSON = 'list.json'
-LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 PREDEFINED_URL_FILE = 'predefined_url.json'
+
+
+def get_design_examples_list(data):
+    # Possibility 1: { "data": { "designs": [] } }
+    if "data" in data:
+        if "designs" in data["data"]:
+            data = data["data"]["designs"]
+    # Possibility 2: { "designs": [] }
+    elif "designs" in data:
+        data = data["designs"]
+    else:
+        logging.error(f"Invalid format of data : {data}, skipping...")
+        data = []
+    return data
+
+def process_github_url(url_detail):
+    """
+    Processes each release's assets to find and extend list.json content.
+    """
+    list_json = []
+
+    releases = fetch_github_releases(url_detail["repo_owner"], url_detail["repo_name"], url_detail["headers"], url_detail["proxies"], url_detail["is_predefined_url"])
+
+    for release in releases:
+        design_package_maps = {}
+        list_json_by_release = []
+
+        # Flow to get list.json from a release
+        for asset in release.get('assets', []):
+            if 'name' in asset:
+                # Example: s10_pcie_devkit_blinking_led_stp.zip => https://api.github.com/repos/intel-sandbox/personal.kbrunham.fpga-partial-reconfig/releases/assets/159359041
+                design_package_maps[asset['name']] = add_token_to_url(asset['url'], url_detail['token'])
+
+                if asset['name'] == LIST_JSON:
+                    list_json_url = asset['url']
+
+                    # Set the header - please read https://docs.github.com/en/rest/releases/assets
+                    headers = url_detail["headers"]
+                    headers["Accept"] = "application/octet-stream" # This is required to download file
+
+                    try:
+                        list_json_response = requests.get(list_json_url, headers=headers, proxies=url_detail["proxies"])
+                        list_json_response.raise_for_status()  # Raise an exception for HTTP errors
+                        data = list_json_response.json()
+                        list_json_by_release = get_design_examples_list(data)
+                    except requests.exceptions.RequestException as e:
+                        if not url_detail["is_predefined_url"]:
+                            logging.error(f"Failed to fetch {LIST_JSON} from release {release['tag_name']}: {e}")
+            else:
+                if not url_detail["is_predefined_url"]:
+                    logging.error(f"Unable to find 'name' in {asset}")
+
+        # If list.json is found...
+        if list_json_by_release:
+            logging.info(f"Found {len(list_json_by_release)} design examples")
+
+            for item in list_json_by_release:
+                if item['downloadUrl'] in design_package_maps:
+                    item["Q_DOWNLOAD_URL"] = design_package_maps[ item['downloadUrl'] ]
+                else:
+                    if not url_detail["is_predefined_url"]:
+                        logging.error(f"Missing asset {item['downloadUrl']} in release {release['tag_name']}")
+                    item["Q_DOWNLOAD_URL"] = ""
+
+                item['Q_GITHUB_RELEASE'] = release['tag_name']
+
+                # Modify the Rich Description Image URL by adding the token to the URL
+                item["rich_description"] = add_token_to_image_url(item["rich_description"], f"{url_detail['repo_owner']}/{url_detail['repo_name']}", url_detail['token'])
+
+            list_json.extend(list_json_by_release)
+        else:
+            if not url_detail["is_predefined_url"]:
+                logging.error(f"Unable to read {LIST_JSON} in release '{release['tag_name']}'. Skipping...")
+
+    if not list_json:
+        if not url_detail["is_predefined_url"]:
+            logging.error(f"Unable to read any {LIST_JSON} in URL {url_detail['url']}")
+
+    return list_json
+
+def process_non_github_url(url_detail):
+    """
+    Processes non-GitHub URLs to fetch and extend list.json content.
+    """
+    list_json = []
+    try:
+        response = requests.get(url_detail["url"])
+        try:
+            data = json.loads(response.text, strict=False)
+            list_json_by_url = get_design_examples_list(data)
+
+            if list_json_by_url:
+                logging.info(f"Found {len(list_json_by_url)} design examples")
+
+                for item in list_json_by_url:
+                    item["Q_DOWNLOAD_URL"] = item["downloadUrl"]
+
+                list_json.extend( list_json_by_url )
+            else:
+                logging.error(f"Unable to find any design examples in URL {url_detail['url']}")
+        except json.JSONDecodeError:
+            logging.error(f"URL {url_detail['url']} did not return a valid JSON response.")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Failed to fetch URL {url_detail['url']}: {e}")
+    return list_json
+
+def extract_url_details(urls):
+    urls_details = []
+    for url in urls:
+        parsed_url = urlparse(url)
+        path_parts = parsed_url.path.lstrip('/').split('/')
+        if len(path_parts) >= 2:
+            repo_owner = path_parts[0]
+            repo_name = path_parts[1]
+        else:
+            repo_owner = ''
+            repo_name = ''
+
+        urls_details.append({
+            "url": url,
+            "repo_owner": repo_owner,
+            "repo_name": repo_name
+        })
+    return urls_details
 
 def get_predefined_url():
     try:
@@ -37,68 +160,64 @@ def get_predefined_url():
         logging.error(f"An unexpected error occurred while reading the file {file_path}: {e}")
     return None
 
+def get_unique_urls(list):
+    unique_list = []
+    temp_list = []
+    for item in list:
+        if item['url'] not in temp_list:
+            temp_list.append(item['url'])
+            unique_list.append(item)
+    return unique_list
+
 def get_design_examples(options):
-    print(get_predefined_url());
-    print("get_design_examples")
+    url_details = []
+    all_list_json = []
+    predefined_urls = get_predefined_url()
+    url_details.extend( extract_url_details(predefined_urls) )
+    url_details = get_unique_urls(url_details)
+
+    for url_detail in url_details:
+        logging.info("----------------------------------------")
+        logging.info(f"Processing URL {url_detail['url']}")
+
+        if is_github( url_detail["url"] ):
+            list_json = process_github_url(url_detail)
+        else:
+            list_json = process_non_github_url(url_detail)
+
+        # Added validation status for predefined URL
+        for item in list_json:
+            item["Q_VALIDATED"] = True
+
+        all_list_json.extend( list_json )
+
+    print(all_list_json)
 
 def check_prerequisite(options):
-    if options.output:
-        output_dir = Path(options.output).parent
-        if not output_dir.exists():
-            try:
-                output_dir.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                logging.error(f"Error encountered while attempting to create output directory '{output_dir}': {e}")
-                exit(1)
-    else:
-        # If --output is not defined, we will use the current working directory as default list.json.
-        options.output = os.path.join(os.getcwd(), LIST_JSON)
+    options.output = os.path.join(os.getcwd(), LIST_JSON)
 
-
-def configure_logging(silent=False, log_file=None):
+def configure_logging(options):
     handlers = []
-
-    if not silent:
-        handlers.append(logging.StreamHandler(sys.stdout))
-
-    if log_file:
-        log_dir = Path(log_file).parent
-        if not log_dir.exists():
-            try:
-                log_dir.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                logging.error(f"Error encountered while attempting to create log directory '{log_dir}': {e}")
-                exit(1)
-
-        file_handler = logging.FileHandler(log_file, mode='w')
-        file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-        handlers.append(file_handler)
-
-    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, handlers=handlers)
-
+    handlers.append(logging.StreamHandler(sys.stdout))
+    logging.basicConfig(
+        level=logging.INFO, 
+        format='%(asctime)s - %(levelname)s - %(message)s', 
+        handlers=handlers
+    )
 
 def close_logging():
     for handler in logging.getLogger().handlers[:]:
         handler.close()
         logging.getLogger().removeHandler(handler)
 
-
 def main(argv):
     option_parser = optparse.OptionParser(usage=DEFAULT_USAGE_TEXT, version=VERSION)
-
-    option_parser.add_option("-o", "--output", dest="output", action="store", default="", help="The output file full path to store the consolidation of all the list.json after scanning all the directories. Optional.")
-    option_parser.add_option("-l", "--log", dest="log", action="store", default="", help="The log file full path. If this is specified, the log will be piped to the file. Optional.")
-    option_parser.add_option("-s", "--silent", dest="silent", action="store_true", default=False, help="Set this to true to avoid printing to STDOUT. Optional.")
-
     options, args = option_parser.parse_args(argv)
 
-    configure_logging(options.silent, options.log)
-
+    configure_logging(options)
     check_prerequisite(options)
     get_design_examples(options)
-
     close_logging()
-
 
 if "__main__" == __name__:
     result = main(sys.argv)
