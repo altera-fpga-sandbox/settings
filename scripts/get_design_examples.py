@@ -17,7 +17,7 @@ VERSION = '1.0'
 DEFAULT_USAGE_TEXT = ("""
 ===============================================================================================
 Usage: %prog [options] arg
-Tool to get design examples
+Tool to get predefined design examples
 ===============================================================================================
 """)
 
@@ -38,13 +38,26 @@ def get_design_examples_list(data):
         data = []
     return data
 
+def fetch_github_releases(repo_owner, repo_name):
+    """
+    Fetches the list of releases from a GitHub repository.
+    """
+    releases_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases"
+    try:
+        response = requests.get(releases_url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching releases for {repo_owner}/{repo_name}. Exception details: {e}")
+        return []
+
 def process_github_url(url_detail):
     """
     Processes each release's assets to find and extend list.json content.
     """
     list_json = []
 
-    releases = fetch_github_releases(url_detail["repo_owner"], url_detail["repo_name"], url_detail["headers"], url_detail["proxies"], url_detail["is_predefined_url"])
+    releases = fetch_github_releases(url_detail["repo_owner"], url_detail["repo_name"])
 
     for release in releases:
         design_package_maps = {}
@@ -54,7 +67,7 @@ def process_github_url(url_detail):
         for asset in release.get('assets', []):
             if 'name' in asset:
                 # Example: s10_pcie_devkit_blinking_led_stp.zip => https://api.github.com/repos/intel-sandbox/personal.kbrunham.fpga-partial-reconfig/releases/assets/159359041
-                design_package_maps[asset['name']] = add_token_to_url(asset['url'], url_detail['token'])
+                design_package_maps[asset['name']] = asset['url']
 
                 if asset['name'] == LIST_JSON:
                     list_json_url = asset['url']
@@ -64,16 +77,14 @@ def process_github_url(url_detail):
                     headers["Accept"] = "application/octet-stream" # This is required to download file
 
                     try:
-                        list_json_response = requests.get(list_json_url, headers=headers, proxies=url_detail["proxies"])
+                        list_json_response = requests.get(list_json_url)
                         list_json_response.raise_for_status()  # Raise an exception for HTTP errors
                         data = list_json_response.json()
                         list_json_by_release = get_design_examples_list(data)
                     except requests.exceptions.RequestException as e:
-                        if not url_detail["is_predefined_url"]:
-                            logging.error(f"Failed to fetch {LIST_JSON} from release {release['tag_name']}: {e}")
+                        logging.error(f"Failed to fetch {LIST_JSON} from release {release['tag_name']}: {e}")
             else:
-                if not url_detail["is_predefined_url"]:
-                    logging.error(f"Unable to find 'name' in {asset}")
+                logging.error(f"Unable to find 'name' in {asset}")
 
         # If list.json is found...
         if list_json_by_release:
@@ -83,23 +94,17 @@ def process_github_url(url_detail):
                 if item['downloadUrl'] in design_package_maps:
                     item["Q_DOWNLOAD_URL"] = design_package_maps[ item['downloadUrl'] ]
                 else:
-                    if not url_detail["is_predefined_url"]:
-                        logging.error(f"Missing asset {item['downloadUrl']} in release {release['tag_name']}")
+                    logging.error(f"Missing asset {item['downloadUrl']} in release {release['tag_name']}")
                     item["Q_DOWNLOAD_URL"] = ""
 
                 item['Q_GITHUB_RELEASE'] = release['tag_name']
 
-                # Modify the Rich Description Image URL by adding the token to the URL
-                item["rich_description"] = add_token_to_image_url(item["rich_description"], f"{url_detail['repo_owner']}/{url_detail['repo_name']}", url_detail['token'])
-
             list_json.extend(list_json_by_release)
         else:
-            if not url_detail["is_predefined_url"]:
-                logging.error(f"Unable to read {LIST_JSON} in release '{release['tag_name']}'. Skipping...")
+            logging.error(f"Unable to read {LIST_JSON} in release '{release['tag_name']}'. Skipping...")
 
     if not list_json:
-        if not url_detail["is_predefined_url"]:
-            logging.error(f"Unable to read any {LIST_JSON} in URL {url_detail['url']}")
+        logging.error(f"Unable to read any {LIST_JSON} in URL {url_detail['url']}")
 
     return list_json
 
