@@ -94,7 +94,7 @@ def process_github_url(url_detail):
 
         # If list.json is found...
         if list_json_by_release:
-            logging.info(f"Found {len(list_json_by_release)} design examples")
+            logging.info(f"Found {len(list_json_by_release)} design examples in {release['tag_name']}")
 
             for item in list_json_by_release:
                 if item['downloadUrl'] in design_package_maps:
@@ -126,7 +126,7 @@ def process_non_github_url(url_detail):
             list_json_by_url = get_design_examples_list(data)
 
             if list_json_by_url:
-                logging.info(f"Found {len(list_json_by_url)} design examples")
+                logging.info(f"Found {len(list_json_by_url)} design examples in this non GitHub URL")
 
                 for item in list_json_by_url:
                     item["Q_DOWNLOAD_URL"] = item["downloadUrl"]
