@@ -41,13 +41,13 @@ def get_design_examples_list(data):
         data = []
     return data
 
-def fetch_github_releases(repo_owner, repo_name):
+def fetch_github_releases(repo_owner, repo_name, headers):
     """
     Fetches the list of releases from a GitHub repository.
     """
     releases_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases"
     try:
-        response = requests.get(releases_url)
+        response = requests.get(releases_url, headers=headers)
         response.raise_for_status()  # Raise an exception for HTTP errors
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -60,7 +60,7 @@ def process_github_url(url_detail):
     """
     list_json = []
 
-    releases = fetch_github_releases(url_detail["repo_owner"], url_detail["repo_name"])
+    releases = fetch_github_releases(url_detail["repo_owner"], url_detail["repo_name"], url_detail["headers"])
 
     for release in releases:
         design_package_maps = {}
@@ -80,7 +80,7 @@ def process_github_url(url_detail):
                     headers["Accept"] = "application/octet-stream" # This is required to download file
 
                     try:
-                        list_json_response = requests.get(list_json_url)
+                        list_json_response = requests.get(list_json_url, headers=headers)
                         list_json_response.raise_for_status()  # Raise an exception for HTTP errors
                         data = list_json_response.json()
                         list_json_by_release = get_design_examples_list(data)
@@ -117,7 +117,7 @@ def process_non_github_url(url_detail):
     """
     list_json = []
     try:
-        response = requests.get(url_detail["url"])
+        response = requests.get(url_detail["url"], headers=url_detail["headers"])
         try:
             data = json.loads(response.text, strict=False)
             list_json_by_url = get_design_examples_list(data)
@@ -149,8 +149,11 @@ def extract_url_details(urls):
             repo_owner = ''
             repo_name = ''
 
+        headers = {}
+
         urls_details.append({
             "url": url,
+            "headers": headers,
             "repo_owner": repo_owner,
             "repo_name": repo_name
         })
