@@ -28,6 +28,9 @@ PREDEFINED_URL_FILE = 'predefined_url.json'
 def is_github(url):
     return "github.com" in url
 
+def metadata_formatize(metadata):
+    return { "num": len(metadata), "designs": metadata }
+
 def get_design_examples_list(data):
     # Possibility 1: { "data": { "designs": [] } }
     if "data" in data:
@@ -207,7 +210,14 @@ def get_design_examples(options):
 
         all_list_json.extend( list_json )
 
-    print(all_list_json)
+    logging.info("----------------------------------------")
+    if all_list_json:
+        logging.info(f"Consolidating all {LIST_JSON} files into '{options.output}'...")
+        logging.info(f"Total consolidated design examples: {len(all_list_json)}")
+        all_list_json = metadata_formatize(all_list_json)
+        print(all_list_json)
+    else:
+        logging.error(f"Unable to find any {LIST_JSON}")
 
 def check_prerequisite(options):
     options.output = os.path.join(os.getcwd(), LIST_JSON)
