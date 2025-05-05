@@ -25,6 +25,9 @@ LIST_JSON = 'list.json'
 PREDEFINED_URL_FILE = 'predefined_url.json'
 
 
+def is_github(url):
+    return "github.com" in url
+
 def get_design_examples_list(data):
     # Possibility 1: { "data": { "designs": [] } }
     if "data" in data:
