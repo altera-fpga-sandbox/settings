@@ -31,5 +31,4 @@ jobs:
         run: python .github/get_predefined_de/get_predefined_de.py
 
       - name: Create PR if Changes
-        run: |
-          .github/cicd-common/create_pr_if_changes.sh
+        run: .github/get_predefined_de/create_pr_if_changes.sh
