@@ -27,6 +27,11 @@ jobs:
         shell: bash
         run: pip install -r .github/get_predefined_de/requirements.txt
 
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
       - name: Get predefined design examples
         run: python .github/get_predefined_de/get_predefined_de.py
 
