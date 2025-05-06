@@ -29,3 +29,7 @@ jobs:
 
       - name: Get design examples
         run: python .github/get_predefined_de/get_predefined_de.py
+
+      - name: Create PR if Changes
+        run: |
+          .github/cicd-common/create_pr_if_changes.sh
