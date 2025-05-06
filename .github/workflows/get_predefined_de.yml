@@ -22,7 +22,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
-          
+
+      - name: Show me the current directory
+        shell: bash
+        run: ls -la 
+
       - name: Install Python Dependencies
         shell: bash
         run: pip install -r .github/get_predefined_de/requirements.txt
