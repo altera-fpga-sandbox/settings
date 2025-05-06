@@ -94,7 +94,7 @@ def process_github_url(url_detail):
 
         # If list.json is found...
         if list_json_by_release:
-            logging.info(f"Found {len(list_json_by_release)} design examples in {release['tag_name']}")
+            logging.info(f"Found {len(list_json_by_release)} design examples in release '{release['tag_name']}'")
 
             for item in list_json_by_release:
                 if item['downloadUrl'] in design_package_maps:
@@ -145,6 +145,7 @@ def extract_url_details(urls):
     for url in urls:
         parsed_url = urlparse(url)
         path_parts = parsed_url.path.lstrip('/').split('/')
+
         if len(path_parts) >= 2:
             repo_owner = path_parts[0]
             repo_name = path_parts[1]
@@ -152,47 +153,43 @@ def extract_url_details(urls):
             repo_owner = ''
             repo_name = ''
 
-        headers = {}
-
         urls_details.append({
             "url": url,
-            "headers": headers,
+            "headers": {},
             "repo_owner": repo_owner,
             "repo_name": repo_name
         })
     return urls_details
 
 def get_predefined_url():
+    predefined_urls = []
     try:
         with open(PREDEFINED_URL_FILE, 'r', encoding='utf-8') as file:
             data = json.load(file)
-            predefined_urls = []
             for item in data:
                 if "url" in item:
                     predefined_urls.append( item["url"] )
-            return predefined_urls
     except FileNotFoundError:
-        logging.error(f"File not found: {file_path}")
+        logging.error(f"File not found: {PREDEFINED_URL_FILE}")
     except json.JSONDecodeError as e:
-        logging.error(f"Failed to decode JSON from file {file_path}: {e}")
+        logging.error(f"Failed to decode JSON from file {PREDEFINED_URL_FILE}: {e}")
     except Exception as e:
-        logging.error(f"An unexpected error occurred while reading the file {file_path}: {e}")
-    return []
+        logging.error(f"An unexpected error occurred while reading the file {PREDEFINED_URL_FILE}: {e}")
+    return predefined_urls
 
-def get_unique_urls(list):
+def get_unique_urls(url_details):
     unique_list = []
     temp_list = []
-    for item in list:
+    for item in url_details:
         if item['url'] not in temp_list:
             temp_list.append(item['url'])
             unique_list.append(item)
     return unique_list
 
 def get_design_examples(options):
-    url_details = []
     all_list_json = []
     predefined_urls = get_predefined_url()
-    url_details.extend( extract_url_details(predefined_urls) )
+    url_details = extract_url_details(predefined_urls)
     url_details = get_unique_urls(url_details)
 
     for url_detail in url_details:
