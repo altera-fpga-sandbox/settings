@@ -31,6 +31,44 @@ def is_github(url):
 def metadata_formatize(metadata):
     return { "num": len(metadata), "designs": metadata }
 
+def show_file_content(file_path):
+    """
+    Reads and displays the content of the specified file.
+
+    Args:
+        file_path (str): The path to the file to read.
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+            print(f"Content of {file_path}:\n{content}")
+    except FileNotFoundError:
+        print(f"The file {file_path} does not exist.")
+    except Exception as e:
+        print(f"An error occurred while reading the file {file_path}: {e}")
+
+def write_to_file(output_path, content):
+    """
+    Writes the given content to the specified file in JSON format.
+
+    Args:
+        output_path (str): The path to the output file.
+        content (dict or list): The content to write to the file.
+    """
+    try:
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        # Write the content to the file
+        with open(output_path, 'w', encoding='utf-8') as file:
+            json.dump(content, file, indent=4, ensure_ascii=False)
+
+        logging.info(f"Successfully wrote content to {output_path}.")
+    except Exception as e:
+        logging.error(f"Failed to write to file {output_path}: {e}")
+
+    show_file_content(options.output)
+
 def replace_if_diff(options, all_list_json):
     logging.info("----------------------------------------")
     logging.info(f"Checking the content of {options.output} for updates...")
@@ -45,9 +83,11 @@ def replace_if_diff(options, all_list_json):
             if existing_content == all_list_json:
                 logging.info(f"The content of {options.output} is up-to-date. No changes are required. Exiting.")
             else:
-                print("DIFF...")
+                logging.info("Differences detected between the existing file and the generated content.")
+                write_to_file(options.output, all_list_json)
         else:
             logging.info(f"The file {options.output} does not exist. Creating a new file...")
+            write_to_file(options.output, all_list_json)
     except Exception as e:
         logging.error(f"An error occurred while verifying the file {options.output}: {e}")
 
