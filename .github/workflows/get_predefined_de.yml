@@ -25,7 +25,7 @@ jobs:
           
       - name: Install Python Dependencies
         shell: bash
-        run: pip install -r scripts/requirements.txt
+        run: pip install -r .github/get_predefined_de/requirements.txt
 
       - name: Get design examples
-        run: python scripts/get_design_examples.py
+        run: python .github/get_predefined_de/get_design_examples.py
