@@ -31,22 +31,6 @@ def is_github(url):
 def metadata_formatize(metadata):
     return { "num": len(metadata), "designs": metadata }
 
-def show_file_content(file_path):
-    """
-    Reads and displays the content of the specified file.
-
-    Args:
-        file_path (str): The path to the file to read.
-    """
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-            print(f"Content of {file_path}:\n{content}")
-    except FileNotFoundError:
-        print(f"The file {file_path} does not exist.")
-    except Exception as e:
-        print(f"An error occurred while reading the file {file_path}: {e}")
-
 def write_to_file(output_path, content):
     """
     Writes the given content to the specified file in JSON format.
@@ -66,8 +50,6 @@ def write_to_file(output_path, content):
         logging.info(f"Successfully wrote content to {output_path}.")
     except Exception as e:
         logging.error(f"Failed to write to file {output_path}: {e}")
-
-    show_file_content(output_path)
 
 def replace_if_diff(options, all_list_json):
     logging.info("----------------------------------------")
