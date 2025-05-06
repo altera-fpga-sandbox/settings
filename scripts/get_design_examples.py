@@ -31,6 +31,23 @@ def is_github(url):
 def metadata_formatize(metadata):
     return { "num": len(metadata), "designs": metadata }
 
+def replace_if_diff(options, all_list_json):
+    try:
+        # Check if the output file exists
+        if os.path.exists(options.output):
+            with open(options.output, 'r', encoding='utf-8') as file:
+                existing_content = json.load(file)
+
+            # Compare the existing content with the generated content
+            if existing_content == all_list_json:
+                print("SAME")
+            else:
+                print("DIFF...")
+        else:
+            print("Creating new catalog...")
+    except Exception as e:
+        print(f"Error while comparing files: {e}")
+
 def get_design_examples_list(data):
     # Possibility 1: { "data": { "designs": [] } }
     if "data" in data:
@@ -212,19 +229,13 @@ def get_design_examples(options):
         logging.info(f"Consolidating all {LIST_JSON} files into '{options.output}'...")
         logging.info(f"Total consolidated design examples: {len(all_list_json)}")
         all_list_json = metadata_formatize(all_list_json)
-        print(all_list_json)
+        replace_if_diff(options, all_list_json)
     else:
         logging.error(f"Unable to find any {LIST_JSON}")
 
 def check_prerequisite(options):
-    options.output = os.path.join(os.getcwd(), LIST_JSON)
-
-    print("+++++cCUR DIR++++")
-    current_directory = os.getcwd()
-    print(f"Current Directory: {current_directory}")
-    print("Contents:")
-    for item in os.listdir(current_directory):
-        print(f"- {item}")
+    # Example: /home/runner/work/settings/settings/scripts/catalog/list.json
+    options.output = os.path.join(os.getcwd(), "scripts", "catalog", LIST_JSON)
 
 def configure_logging(options):
     handlers = []
