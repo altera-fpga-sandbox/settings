@@ -235,7 +235,7 @@ def get_design_examples(options):
 
 def check_prerequisite(options):
     # Example: /home/runner/work/settings/settings/scripts/catalog/list.json
-    options.output = os.path.join(os.getcwd(), "scripts", "catalog", LIST_JSON)
+    options.output = os.path.join(os.getcwd(), ".github", "get_predefined_de", "catalog", LIST_JSON)
 
 def configure_logging(options):
     handlers = []
