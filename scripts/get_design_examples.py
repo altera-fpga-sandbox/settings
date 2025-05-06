@@ -219,6 +219,13 @@ def get_design_examples(options):
 def check_prerequisite(options):
     options.output = os.path.join(os.getcwd(), LIST_JSON)
 
+    print("+++++cCUR DIR++++")
+    current_directory = os.getcwd()
+    print(f"Current Directory: {current_directory}")
+    print("Contents:")
+    for item in os.listdir(current_directory):
+        print(f"- {item}")
+
 def configure_logging(options):
     handlers = []
     handlers.append(logging.StreamHandler(sys.stdout))
