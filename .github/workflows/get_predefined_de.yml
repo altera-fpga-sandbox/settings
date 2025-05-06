@@ -18,7 +18,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -27,8 +27,10 @@ jobs:
         shell: bash
         run: pip install -r .github/get_predefined_de/requirements.txt
 
-      - name: Get design examples
+      - name: Get predefined design examples
         run: python .github/get_predefined_de/get_predefined_de.py
 
       - name: Create PR if Changes
-        run: .github/get_predefined_de/create_pr_if_changes.sh
+        run: |
+            chmod +x .github/get_predefined_de/create_pr_if_changes.sh && \
+            .github/get_predefined_de/create_pr_if_changes.sh
