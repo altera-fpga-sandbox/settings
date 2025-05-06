@@ -67,7 +67,7 @@ def write_to_file(output_path, content):
     except Exception as e:
         logging.error(f"Failed to write to file {output_path}: {e}")
 
-    show_file_content(options.output)
+    show_file_content(output_path)
 
 def replace_if_diff(options, all_list_json):
     logging.info("----------------------------------------")
