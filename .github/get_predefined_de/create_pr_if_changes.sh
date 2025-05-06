@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# If changes are found then create a pr with the changes
+# If changes are found then create a PR with the changes
 
 set -e
 
@@ -18,14 +18,23 @@ echo "Checking update for branch: $BRANCH"
 
 if [[ `git status --porcelain` ]]; then
     echo "Found changes"
-    dt pr init feat/autopr_$(date +%s)
+
+    # Create a new branch for the changes
+    BRANCH_NAME="predefined_de/autopr_$(date +%s)"
+    git checkout -b "$BRANCH_NAME"
+
+    # Stage and commit the changes
     git add -u
     git commit -m "$PR_TITLE"
 
+    # Push the branch to the remote repository
+    git push -u origin "$BRANCH_NAME"
+
+    # Create a pull request using GitHub CLI
     if [[ "$BRANCH" == "main" ]]; then
-        dt pr create --no-fork --title="$PR_TITLE"
+        gh pr create --title "$PR_TITLE" --body "Automated PR for changes" --base "$BRANCH" --head "$BRANCH_NAME"
     else
-        dt pr create --no-fork --title="$PR_TITLE" --base=rel/$BRANCH
+        gh pr create --title "$PR_TITLE" --body "Automated PR for changes" --base "rel/$BRANCH" --head "$BRANCH_NAME"
     fi
 else
     echo "No changes to commit"
