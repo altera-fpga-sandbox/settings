@@ -32,6 +32,9 @@ def metadata_formatize(metadata):
     return { "num": len(metadata), "designs": metadata }
 
 def replace_if_diff(options, all_list_json):
+    logging.info("----------------------------------------")
+    logging.info(f"Checking the content of {options.output} for updates...")
+
     try:
         # Check if the output file exists
         if os.path.exists(options.output):
@@ -40,13 +43,13 @@ def replace_if_diff(options, all_list_json):
 
             # Compare the existing content with the generated content
             if existing_content == all_list_json:
-                print("SAME")
+                logging.info(f"The content of {options.output} is up-to-date. No changes are required. Exiting.")
             else:
                 print("DIFF...")
         else:
-            print("Creating new catalog...")
+            logging.info(f"The file {options.output} does not exist. Creating a new file...")
     except Exception as e:
-        print(f"Error while comparing files: {e}")
+        logging.error(f"An error occurred while verifying the file {options.output}: {e}")
 
 def get_design_examples_list(data):
     # Possibility 1: { "data": { "designs": [] } }
@@ -57,7 +60,7 @@ def get_design_examples_list(data):
     elif "designs" in data:
         data = data["designs"]
     else:
-        logging.error(f"Invalid format of data : {data}, skipping...")
+        logging.error(f"The data format is invalid: {data}. Skipping this entry...")
         data = []
     return data
 
@@ -71,7 +74,7 @@ def fetch_github_releases(repo_owner, repo_name, headers):
         response.raise_for_status()  # Raise an exception for HTTP errors
         return response.json()
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching releases for {repo_owner}/{repo_name}. Exception details: {e}")
+        logging.error(f"Failed to fetch releases for repository {repo_owner}/{repo_name}. Error: {e}")
         return []
 
 def process_github_url(url_detail):
@@ -105,9 +108,9 @@ def process_github_url(url_detail):
                         data = list_json_response.json()
                         list_json_by_release = get_design_examples_list(data)
                     except requests.exceptions.RequestException as e:
-                        logging.error(f"Failed to fetch {LIST_JSON} from release {release['tag_name']}: {e}")
+                        logging.error(f"Unable to fetch {LIST_JSON} from release '{release['tag_name']}': {e}")
             else:
-                logging.error(f"Unable to find 'name' in {asset}")
+                logging.error(f"Missing 'name' field in asset: {asset}")
 
         # If list.json is found...
         if list_json_by_release:
@@ -231,7 +234,7 @@ def get_design_examples(options):
         all_list_json = metadata_formatize(all_list_json)
         replace_if_diff(options, all_list_json)
     else:
-        logging.error(f"Unable to find any {LIST_JSON}")
+        logging.error(f"No {LIST_JSON} files were found.")
 
 def check_prerequisite(options):
     # Example: /home/runner/work/settings/settings/scripts/catalog/list.json
