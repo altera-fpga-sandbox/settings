@@ -33,10 +33,18 @@ jobs:
           sudo apt update
           sudo apt install -y gh
 
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
       - name: Get Predefined Design Examples
         run: python .github/get_predefined_de/get_predefined_de.py
 
       - name: Create Pull Request if Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            chmod +x .github/get_predefined_de/create_pr_if_changes.sh && \
-            .github/get_predefined_de/create_pr_if_changes.sh
+          chmod +x .github/get_predefined_de/create_pr_if_changes.sh && \
+          .github/get_predefined_de/create_pr_if_changes.sh
