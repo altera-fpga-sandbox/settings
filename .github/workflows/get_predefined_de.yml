@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
+  # Ensures that only one instance of this workflow runs at a time for the same branch
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -32,10 +33,10 @@ jobs:
           sudo apt update
           sudo apt install -y gh
 
-      - name: Get predefined design examples
+      - name: Get Predefined Design Examples
         run: python .github/get_predefined_de/get_predefined_de.py
 
-      - name: Create PR if Changes
+      - name: Create Pull Request if Changes
         run: |
             chmod +x .github/get_predefined_de/create_pr_if_changes.sh && \
             .github/get_predefined_de/create_pr_if_changes.sh
