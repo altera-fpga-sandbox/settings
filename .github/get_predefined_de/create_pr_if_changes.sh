@@ -14,6 +14,12 @@ if [ -z "$BRANCH" ]; then
     BRANCH="main"
 fi
 
+# Check if GitHub CLI is installed
+if ! command -v gh &> /dev/null; then
+    echo "Error: GitHub CLI (gh) is not installed."
+    exit 1
+fi
+
 echo "Checking update for branch: $BRANCH"
 
 if [[ `git status --porcelain` ]]; then
@@ -21,16 +27,20 @@ if [[ `git status --porcelain` ]]; then
 
     # Create a new branch for the changes
     BRANCH_NAME="predefined_de/autopr_$(date +%s)"
+    echo "Creating a new branch: $BRANCH_NAME"
     git checkout -b "$BRANCH_NAME"
 
     # Stage and commit the changes
+    echo "Staging and committing changes..."
     git add -u
     git commit -m "$PR_TITLE"
 
     # Push the branch to the remote repository
+    echo "Pushing changes to remote repository..."
     git push -u origin "$BRANCH_NAME"
 
     # Create a pull request using GitHub CLI
+    echo "Creating a pull request..."
     if [[ "$BRANCH" == "main" ]]; then
         gh pr create --title "$PR_TITLE" --body "Automated PR for changes" --base "$BRANCH" --head "$BRANCH_NAME"
     else
