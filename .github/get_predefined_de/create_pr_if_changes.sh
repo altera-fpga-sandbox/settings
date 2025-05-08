@@ -25,6 +25,11 @@ echo "Checking update for branch: $BRANCH"
 if [[ `git status --porcelain` ]]; then
     echo "Found changes"
 
+    # Configure Git user identity
+    echo "Configuring Git user identity..."
+    git config --global user.name "GitHub Actions"
+    git config --global user.email "actions@github.com"
+
     # Create a new branch for the changes
     BRANCH_NAME="predefined_de/autopr_$(date +%s)"
     echo "Creating a new branch: $BRANCH_NAME"
