@@ -203,8 +203,13 @@ def extract_url_details(urls):
         })
     return urls_details
 
+def get_legacy_predefined_url():
+    return [
+        "https://bsas.intel.com/api/design_examples/latest/"
+    ]
+
 def get_predefined_url():
-    predefined_urls = []
+    predefined_urls = get_legacy_predefined_url()
     try:
         with open(PREDEFINED_URL_FILE, 'r', encoding='utf-8') as file:
             data = json.load(file)
