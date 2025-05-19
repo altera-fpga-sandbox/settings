@@ -22,6 +22,7 @@ fi
 
 if [ -z "$GITHUB_TOKEN" ]; then
     echo "GITHUB_TOKEN is not set."
+    exit 1
 else
     echo "GITHUB_TOKEN is set."
 fi
@@ -41,9 +42,18 @@ if [[ `git status --porcelain` ]]; then
     echo "Creating a new branch: $BRANCH_NAME"
     git checkout -b "$BRANCH_NAME"
 
-    # Stage and commit the changes
+    # Check if the file exists, and create it if it doesn't
+    FILE_PATH=".github/get_predefined_de/catalog/list.json"
+    if [ ! -f "$FILE_PATH" ]; then
+        echo "File $FILE_PATH does not exist. Creating a new file..."
+        mkdir -p "$(dirname "$FILE_PATH")"  # Ensure the directory exists
+        echo "{}" > "$FILE_PATH"  # Create an empty JSON file
+        echo "Created $FILE_PATH with default content."
+    fi
+
+    # Stage all changes, including untracked files
     echo "Staging and committing changes..."
-    git add -u
+    git add -A
     git commit -m "$PR_TITLE"
 
     # Push the branch to the remote repository
