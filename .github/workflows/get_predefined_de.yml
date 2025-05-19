@@ -38,7 +38,7 @@ jobs:
 
       - name: Create Pull Request if Changes
         env:
-          GITHUB_TOKEN: ${{ secrets.PR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x .github/get_predefined_de/create_pr_if_changes.sh && \
           .github/get_predefined_de/create_pr_if_changes.sh
