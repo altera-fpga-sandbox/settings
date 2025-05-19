@@ -20,6 +20,13 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
+if [ -z "$GITHUB_TOKEN" ]; then
+    echo "GITHUB_TOKEN is not set."
+else
+    echo "GITHUB_TOKEN is set."
+    echo "GITHUB_TOKEN: $GITHUB_TOKEN"
+fi
+
 echo "Checking update for branch: $BRANCH"
 
 if [[ `git status --porcelain` ]]; then
