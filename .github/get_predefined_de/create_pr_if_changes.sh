@@ -6,7 +6,7 @@ set -e
 
 PR_TITLE=$1
 if [ -z "$PR_TITLE" ]; then
-    PR_TITLE="Auto PR"
+    PR_TITLE="Auto PR: Differences detected"
 fi
 
 BRANCH=$2
@@ -24,7 +24,6 @@ if [ -z "$GITHUB_TOKEN" ]; then
     echo "GITHUB_TOKEN is not set."
 else
     echo "GITHUB_TOKEN is set."
-    echo "GITHUB_TOKEN: $GITHUB_TOKEN"
 fi
 
 echo "Checking update for branch: $BRANCH"
@@ -53,10 +52,11 @@ if [[ `git status --porcelain` ]]; then
 
     # Create a pull request using GitHub CLI
     echo "Creating a pull request..."
+    BODY_CONTENT="Automated PR: Differences detected between the existing file and the generated content."
     if [[ "$BRANCH" == "main" ]]; then
-        gh pr create --title "$PR_TITLE" --body "Automated PR for changes" --base "$BRANCH" --head "$BRANCH_NAME"
+        gh pr create --title "$PR_TITLE" --body "$BODY_CONTENT" --base "$BRANCH" --head "$BRANCH_NAME"
     else
-        gh pr create --title "$PR_TITLE" --body "Automated PR for changes" --base "rel/$BRANCH" --head "$BRANCH_NAME"
+        gh pr create --title "$PR_TITLE" --body "$BODY_CONTENT" --base "rel/$BRANCH" --head "$BRANCH_NAME"
     fi
 else
     echo "No changes to commit"
