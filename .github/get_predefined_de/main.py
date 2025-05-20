@@ -158,6 +158,8 @@ def process_github_url(url_detail):
 
 def process_non_github_url(url_detail):
     """
+    Legacy function to cater for Intel Design Store.
+    Will be removed when Intel Design Store is phased out by end of year 2025.
     Processes non-GitHub URLs to fetch and extend list.json content.
     """
     list_json = []
