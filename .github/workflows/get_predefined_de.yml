@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+  # Run workflow when a file changes in the repo
+  push:
+    paths:
+      - '**/*'
+
 concurrency:
   # Ensures that only one instance of this workflow runs at a time for the same branch
   group: ${{ github.workflow }}-${{ github.ref }}
