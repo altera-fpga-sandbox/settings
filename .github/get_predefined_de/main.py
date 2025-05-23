@@ -22,6 +22,7 @@ Tool to get predefined design examples
 """)
 
 LIST_JSON = 'list.json'
+CONTROLLER_JSON = 'controller.json'
 PREDEFINED_URL_FILE = 'predefined_url.json'
 
 
@@ -51,6 +52,13 @@ def write_to_file(output_path, content):
     except Exception as e:
         logging.error(f"Failed to write to file {output_path}: {e}")
 
+def add_controller(content):
+    if os.path.exists(options.controller):
+        with open(options.controller, 'r', encoding='utf-8') as file:
+            controller_content = json.load(file)
+            content = content + controller_content
+    return content
+
 def replace_if_diff(options, all_list_json):
     logging.info("----------------------------------------")
     logging.info(f"Checking the content of {options.output} for updates...")
@@ -60,6 +68,7 @@ def replace_if_diff(options, all_list_json):
         if os.path.exists(options.output):
             with open(options.output, 'r', encoding='utf-8') as file:
                 existing_content = json.load(file)
+                existing_content = add_controller(existing_content)
 
             # Compare the existing content with the generated content
             if existing_content == all_list_json:
@@ -267,7 +276,9 @@ def get_design_examples(options):
 
 def check_prerequisite(options):
     # Example: /home/runner/work/settings/settings/scripts/catalog/list.json
-    options.output = os.path.join(os.getcwd(), ".github", "get_predefined_de", "catalog", LIST_JSON)
+    dir = os.path.join(os.getcwd(), ".github", "get_predefined_de", "catalog")
+    options.output = os.path.join(dir, LIST_JSON)
+    options.controller = os.path.join(dir, CONTROLLER_JSON)
 
 def configure_logging(options):
     handlers = []
