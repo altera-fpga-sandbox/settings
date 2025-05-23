@@ -33,13 +33,6 @@ def metadata_formatize(metadata):
     return { "num": len(metadata), "designs": metadata }
 
 def write_to_file(output_path, content):
-    """
-    Writes the given content to the specified file in JSON format.
-
-    Args:
-        output_path (str): The path to the output file.
-        content (dict or list): The content to write to the file.
-    """
     try:
         # Ensure the directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -56,10 +49,9 @@ def add_controller(options, content):
     if os.path.exists(options.controller):
         with open(options.controller, 'r', encoding='utf-8') as file:
             controller_content = json.load(file)
-            content = {**content, **controller_content} # Combine content and controller into one.
-            print(controller_content)
-            print("================")
-            print(content)
+
+            # Combine content and controller into one.
+            content = {**content, **controller_content} 
     else:
         logging.info("Controller not found.")
     return content
@@ -86,6 +78,7 @@ def replace_if_diff(options, all_list_json):
             write_to_file(options.output, all_list_json)
     except Exception as e:
         logging.error(f"An error occurred while verifying the file {options.output}: {e}")
+        sys.exit(1)
 
 def get_design_examples_list(data):
     # Possibility 1: { "data": { "designs": [] } }
@@ -96,7 +89,7 @@ def get_design_examples_list(data):
     elif "designs" in data:
         data = data["designs"]
     else:
-        logging.error(f"The data format is invalid: {data}. Skipping this entry...")
+        logging.warning(f"The data format is invalid: {data}. Skipping this entry...")
         data = []
     return data
 
@@ -111,7 +104,7 @@ def fetch_github_releases(repo_owner, repo_name, headers):
         return response.json()
     except requests.exceptions.RequestException as e:
         logging.error(f"Failed to fetch releases for repository {repo_owner}/{repo_name}. Error: {e}")
-        return []
+        sys.exit(1)
 
 def process_github_url(url_detail):
     """
@@ -145,8 +138,10 @@ def process_github_url(url_detail):
                         list_json_by_release = get_design_examples_list(data)
                     except requests.exceptions.RequestException as e:
                         logging.error(f"Unable to fetch {LIST_JSON} from release '{release['tag_name']}': {e}")
+                        sys.exit(1)
             else:
                 logging.error(f"Missing 'name' field in asset: {asset}")
+                sys.exit(1)
 
         # If list.json is found...
         if list_json_by_release:
@@ -156,17 +151,18 @@ def process_github_url(url_detail):
                 if item['downloadUrl'] in design_package_maps:
                     item["Q_DOWNLOAD_URL"] = design_package_maps[ item['downloadUrl'] ]
                 else:
-                    logging.error(f"Missing asset {item['downloadUrl']} in release {release['tag_name']}")
+                    logging.warning(f"Missing asset {item['downloadUrl']} in release {release['tag_name']}")
                     item["Q_DOWNLOAD_URL"] = ""
 
                 item['Q_GITHUB_RELEASE'] = release['tag_name']
 
             list_json.extend(list_json_by_release)
         else:
-            logging.error(f"Unable to read {LIST_JSON} in release '{release['tag_name']}'. Skipping...")
+            logging.warning(f"Unable to read {LIST_JSON} in release '{release['tag_name']}'. Skipping...")
 
     if not list_json:
         logging.error(f"Unable to read any {LIST_JSON} in URL {url_detail['url']}")
+        sys.exit(1)
 
     return list_json
 
@@ -192,10 +188,13 @@ def process_non_github_url(url_detail):
                 list_json.extend( list_json_by_url )
             else:
                 logging.error(f"Unable to find any design examples in URL {url_detail['url']}")
+                sys.exit(1)
         except json.JSONDecodeError:
             logging.error(f"URL {url_detail['url']} did not return a valid JSON response.")
+            sys.exit(1)
     except requests.exceptions.RequestException as e:
         logging.error(f"Failed to fetch URL {url_detail['url']}: {e}")
+        sys.exit(1)
     return list_json
 
 def extract_url_details(urls):
@@ -234,10 +233,13 @@ def get_predefined_url():
                     predefined_urls.append( item["url"] )
     except FileNotFoundError:
         logging.error(f"File not found: {PREDEFINED_URL_FILE}")
+        sys.exit(1)
     except json.JSONDecodeError as e:
         logging.error(f"Failed to decode JSON from file {PREDEFINED_URL_FILE}: {e}")
+        sys.exit(1)
     except Exception as e:
         logging.error(f"An unexpected error occurred while reading the file {PREDEFINED_URL_FILE}: {e}")
+        sys.exit(1)
     return predefined_urls
 
 def get_unique_urls(url_details):
@@ -278,6 +280,7 @@ def get_design_examples(options):
         replace_if_diff(options, all_list_json)
     else:
         logging.error(f"No {LIST_JSON} files were found.")
+        sys.exit(1)
 
 def check_prerequisite(options):
     # Example: /home/runner/work/settings/settings/scripts/catalog/list.json
