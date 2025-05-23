@@ -67,13 +67,13 @@ def add_controller(options, content):
 def replace_if_diff(options, all_list_json):
     logging.info("----------------------------------------")
     logging.info(f"Checking the content of {options.output} for updates...")
+    all_list_json = add_controller(options, all_list_json)
 
     try:
         # Check if the output file exists
         if os.path.exists(options.output):
             with open(options.output, 'r', encoding='utf-8') as file:
                 existing_content = json.load(file)
-                existing_content = add_controller(options, existing_content)
 
             # Compare the existing content with the generated content
             if existing_content == all_list_json:
