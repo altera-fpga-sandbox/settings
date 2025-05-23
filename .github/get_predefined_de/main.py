@@ -52,7 +52,7 @@ def write_to_file(output_path, content):
     except Exception as e:
         logging.error(f"Failed to write to file {output_path}: {e}")
 
-def add_controller(content):
+def add_controller(options, content):
     if os.path.exists(options.controller):
         with open(options.controller, 'r', encoding='utf-8') as file:
             controller_content = json.load(file)
@@ -70,7 +70,7 @@ def replace_if_diff(options, all_list_json):
         if os.path.exists(options.output):
             with open(options.output, 'r', encoding='utf-8') as file:
                 existing_content = json.load(file)
-                existing_content = add_controller(existing_content)
+                existing_content = add_controller(options, existing_content)
 
             # Compare the existing content with the generated content
             if existing_content == all_list_json:
