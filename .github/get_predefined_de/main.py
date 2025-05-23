@@ -46,6 +46,10 @@ def write_to_file(output_path, content):
         logging.error(f"Failed to write to file {output_path}: {e}")
 
 def add_controller(options, content):
+    """
+    This is to control whether the Quartus for a particular version should be always regenerate the list.json
+    and shouldn't be using this pre-generated list.json.
+    """
     if os.path.exists(options.controller):
         with open(options.controller, 'r', encoding='utf-8') as file:
             controller_content = json.load(file)
