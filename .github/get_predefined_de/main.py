@@ -57,6 +57,7 @@ def add_controller(options, content):
         with open(options.controller, 'r', encoding='utf-8') as file:
             controller_content = json.load(file)
             content = {**content, **controller_content} # Combine content and controller into one.
+            logging.info(content)
     else:
         logging.info("Controller not found.")
     return content
