@@ -4914,5 +4914,5 @@
             "Q_VALIDATED": true
         }
     ],
-    "force_always_regenerate": []
+    "force_always_regenerate": ["25.3"]
 }
